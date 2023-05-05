@@ -3,49 +3,6 @@ from rest_framework.serializers import ModelSerializer
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 
 
-class ProjectListSerializer(ModelSerializer):
-
-    class Meta:
-        model = Project
-        fields = ["title", "author_user_id"]
-
-
-class ProjectDetailSerializer(ModelSerializer):
-
-    class Meta:
-        model = Project
-        fields = [
-            "title",
-            "description",
-            "type",
-            "author_user_id",
-        ]
-
-
-class IssueListSerializer(ModelSerializer):
-
-    class Meta:
-        model = Issue
-        fields = ["title", "project"]
-
-
-class IssueDetailSerializer(ModelSerializer):
-
-    class Meta:
-        model = Issue
-        fields = [
-            "title",
-            "description",
-            "tag",
-            "priority",
-            "status",
-            "project",
-            "author_user_id",
-            "assignee_user",
-            "created_time",
-        ]
-
-
 class CommentListSerializer(ModelSerializer):
 
     class Meta:
@@ -62,6 +19,55 @@ class CommentDetailSerializer(ModelSerializer):
             "author_user_id",
             "issue_id",
             "created_time",
+        ]
+
+
+class IssueListSerializer(ModelSerializer):
+
+    class Meta:
+        model = Issue
+        fields = ["title", "project", "comments"]
+
+
+class IssueDetailSerializer(ModelSerializer):
+
+    comments = CommentListSerializer(many=True)
+
+    class Meta:
+        model = Issue
+        fields = [
+            "title",
+            "description",
+            "tag",
+            "priority",
+            "status",
+            "project",
+            "author_user_id",
+            "assignee_user",
+            "created_time",
+            "comments",
+        ]
+
+
+class ProjectListSerializer(ModelSerializer):
+
+    class Meta:
+        model = Project
+        fields = ["title", "author_user_id"]
+
+
+class ProjectDetailSerializer(ModelSerializer):
+
+    issues = IssueListSerializer(many=True)
+
+    class Meta:
+        model = Project
+        fields = [
+            "title",
+            "description",
+            "type",
+            "author_user_id",
+            "issues",
         ]
 
 
