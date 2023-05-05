@@ -16,8 +16,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+
+from issuetrackingsystem.views import ProjectViewset, ProjectAdminViewset, IssueAdminViewset, CommentAdminViewset, ContributorAdminViewset
+from authentication.views import UserAdminViewset
+
+router = routers.SimpleRouter()
+router.register("project", ProjectViewset, basename="project")
+
+router_admin = routers.SimpleRouter()
+router_admin.register("user", UserAdminViewset, basename="user")
+router_admin.register("project", ProjectAdminViewset, basename="project")
+router_admin.register("issue", IssueAdminViewset, basename="issue")
+router_admin.register("comment", CommentAdminViewset, basename="comment")
+router_admin.register("contributor", ContributorAdminViewset, basename="contributor")
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("api-auth/", include("rest_framework.urls")),
+    path("api/admin/", include(router_admin.urls)),
+    path("api/", include(router.urls)),
 ]
