@@ -1,4 +1,4 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 
@@ -31,7 +31,7 @@ class IssueListSerializer(ModelSerializer):
 
 class IssueDetailSerializer(ModelSerializer):
 
-    comments = CommentListSerializer(many=True)
+    comments = SerializerMethodField()
 
     class Meta:
         model = Issue
@@ -48,17 +48,22 @@ class IssueDetailSerializer(ModelSerializer):
             "comments",
         ]
 
+    def get_comments(self, instance):
+        queryset = instance.comments.all()
+        serializer = CommentListSerializer(queryset, many=True)
+        return serializer.data
+
 
 class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["title", "author_user_id"]
+        fields = ["title", "description"]
 
 
 class ProjectDetailSerializer(ModelSerializer):
 
-    issues = IssueListSerializer(many=True)
+    issues = SerializerMethodField()
 
     class Meta:
         model = Project
@@ -69,6 +74,11 @@ class ProjectDetailSerializer(ModelSerializer):
             "author_user_id",
             "issues",
         ]
+
+    def get_issues(self, instance):
+        queryset = instance.issues.all()
+        serializer = IssueListSerializer(queryset, many=True)
+        return serializer.data
 
 
 class ContributorListSerializer(ModelSerializer):
