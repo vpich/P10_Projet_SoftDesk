@@ -6,6 +6,15 @@ from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetail
 from issuetrackingsystem.permissions import IsAdminAuthenticated
 
 
+class MultipleSerializerMixin:
+    detail_serializer_class = None
+
+    def get_serializer_class(self):
+        if self.action == "retrieve" and self.detail_serializer_class is not None:
+            return  self.detail_serializer_class
+        return super().get_serializer_class()
+
+
 class ProjectAdminViewset(ModelViewSet):
 
     serializer_class = ProjectDetailSerializer
@@ -46,9 +55,10 @@ class ContributorAdminViewset(ModelViewSet):
         return Contributor.objects.all()
 
 
-class ProjectViewset(ReadOnlyModelViewSet):
+class ProjectViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
 
     serializer_class = ProjectListSerializer
+    detail_serializer_class = ProjectDetailSerializer
 
     def get_queryset(self):
         return Project.objects.all()
