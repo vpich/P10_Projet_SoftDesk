@@ -110,7 +110,7 @@ class Contributor(models.Model):
     )
 
     permission = models.CharField(max_length=50, choices=Permission.choices, verbose_name="Permission")
-    role = models.CharField(max_length=128, choices=Role.choices, verbose_name="Rôle")
+    role = models.CharField(max_length=128, choices=Role.choices, verbose_name="Rôle", default=Role.CONTRIBUTOR)
 
     # def permission(self):
     #     if self.role == self.Role.CREATOR:
@@ -121,7 +121,7 @@ class Contributor(models.Model):
     project = models.ForeignKey(
         to=Project,
         on_delete=models.CASCADE,
-        related_name="project",
+        related_name="contributors",
     )
 
     class Meta:

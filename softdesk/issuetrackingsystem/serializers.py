@@ -8,7 +8,7 @@ class CommentListSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["description", "author_user_id"]
+        fields = ["description", "author_user_id", "issue_id"]
         read_only_fields = ("author_user_id",)
 
 
@@ -111,3 +111,4 @@ class ContributorDetailSerializer(ModelSerializer):
     class Meta:
         model = Contributor
         fields = "__all__"
+        read_only_fields = ("role", "permission",)

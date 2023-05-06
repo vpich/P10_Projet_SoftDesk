@@ -18,11 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 
-from issuetrackingsystem.views import ProjectViewset, ProjectAdminViewset, IssueAdminViewset, CommentAdminViewset, ContributorAdminViewset
+from issuetrackingsystem.views import ProjectAdminViewset, IssueAdminViewset, CommentAdminViewset, ContributorAdminViewset, \
+    ProjectViewset, ContributorViewset, IssueViewset, CommentViewset
 from authentication.views import UserAdminViewset
 
 router = routers.SimpleRouter()
 router.register("project", ProjectViewset, basename="project")
+router.register("contributor", ContributorViewset, basename="contributor")
+router.register("issue", IssueViewset, basename="issue")
+router.register("comment", CommentViewset, basename="comment")
 
 router_admin = routers.SimpleRouter()
 router_admin.register("user", UserAdminViewset, basename="user")
