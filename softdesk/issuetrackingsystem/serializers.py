@@ -93,6 +93,7 @@ class ProjectDetailSerializer(ModelSerializer):
         serializer = IssueListSerializer(queryset, many=True)
         return serializer.data
 
+    # TODO: A retirer quand le modèle Project n'aura plus author_user_id
     def create(self, validated_data):
         validated_data["author_user_id"] = User.objects.get(id=self.context["request"].user.id)
         return Project.objects.create(**validated_data)

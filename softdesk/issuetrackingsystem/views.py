@@ -1,4 +1,5 @@
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from django.db.models import Q
 
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetailSerializer, \
@@ -16,6 +17,16 @@ class MultipleSerializerMixin:
 
 
 def create_contributor(user, project):
+    # if Contributor.objects.filter(
+    #     project=project,
+    #     user=user,
+    # ):
+    #     return
+    # if Contributor.objects.filter(project=project):
+    #     contributor = Contributor.objects.create(user=user, project=project)
+    #     contributor.role = "ASSIGNEE"
+    #     return contributor.save()
+    # else:
     contributor = Contributor.objects.create(user=user, project=project)
     contributor.role = "CREATOR"
     return contributor.save()

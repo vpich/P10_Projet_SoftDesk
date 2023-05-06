@@ -6,19 +6,16 @@ from authentication.models import User
 
 class Project(models.Model):
 
-    PROJECT = "PROJECT"
-    PRODUCT = "PRODUCT"
-    APPLICATION = "APPLICATION"
-
-    TYPE_CHOICES = (
-        (PROJECT, "Projet"),
-        (PRODUCT, "Production"),
-        (APPLICATION, "Application"),
-    )
+    class Type(models.TextChoices):
+        BACK_END = "BACK-END"
+        FRONT_END = "FRONT-END"
+        IOS = "iOS"
+        ANDROID = "ANDROID"
 
     title = models.CharField(max_length=128, verbose_name="Titre")
     description = models.CharField(max_length=2048, blank=True, null=True)
-    type = models.CharField(max_length=128, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=128, choices=Type.choices)
+    # TODO: retirer l'attribut author_user_id pour éviter la redondance
     author_user_id = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -36,9 +33,9 @@ class Issue(models.Model):
         IMPROVEMENT = "IMPROVEMENT"
 
     class Priority(models.TextChoices):
-        LOW = "L"
-        MEDIUM = "M"
-        HIGH = "H"
+        LOW = "LOW"
+        MEDIUM = "MEDIUM"
+        HIGH = "HIGH"
 
     class Status(models.TextChoices):
         TODO = "T"
@@ -68,6 +65,7 @@ class Issue(models.Model):
         related_name="issues_assigned",
         blank=True,
         null=True,
+        default=author_user_id,
     )
     # assignee_user_id =
 
@@ -96,7 +94,7 @@ class Contributor(models.Model):
 
     class Role(models.TextChoices):
         CREATOR = "CREATOR"
-        ASSIGNEE = "ASSIGNEE"
+        CONTRIBUTOR = "CONTRIBUTOR"
 
     class Permission(models.TextChoices):
         CREATE = "CREATE"
@@ -105,7 +103,7 @@ class Contributor(models.Model):
         DELETE = "DELETE"
 
     user = models.ForeignKey(
-        to=User,
+        to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="user",
         verbose_name="participants",
