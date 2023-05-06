@@ -109,9 +109,4 @@ class ContributorDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = [
-            "user",
-            "project",
-            "permission",
-            "role",
-        ]
+        fields = "__all__"

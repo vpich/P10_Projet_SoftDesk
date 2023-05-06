@@ -15,6 +15,12 @@ class MultipleSerializerMixin:
         return super().get_serializer_class()
 
 
+def create_contributor(user, project):
+    contributor = Contributor.objects.create(user=user, project=project)
+    contributor.role = "CREATOR"
+    return contributor.save()
+
+
 class ProjectAdminViewset(ModelViewSet):
 
     serializer_class = ProjectDetailSerializer
@@ -23,6 +29,12 @@ class ProjectAdminViewset(ModelViewSet):
 
     def get_queryset(self):
         return Project.objects.all()
+
+    def perform_create(self, serializer):
+        project_save = serializer.save()
+        project = Project.objects.get(id=project_save.id)
+        user = self.request.user
+        create_contributor(user, project)
 
 
 class IssueAdminViewset(ModelViewSet):
