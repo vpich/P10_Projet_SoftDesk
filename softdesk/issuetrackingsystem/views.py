@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db.models import Q
 
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetailSerializer, \
@@ -53,8 +54,13 @@ class CustomViewset(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        if check_user_in_contrib(project=get_project(self), user=self.request.user):
-            serializer.save()
+        model = serializer.Meta.model
+        if model == Comment:
+            project = Issue.objects.get(id=self.request.data.get("issue_id")).project
+        else:
+            project = Project.objects.get(id=self.request.data.get("project"))
+        if check_user_in_contrib(project=project, user=self.request.user):
+            return serializer.save()
         else:
             raise ValueError("Vous ne pouvez pas créer d'objet si vous n'êtes pas contributeur du projet")
 
@@ -160,14 +166,6 @@ class ContributorViewset(MultipleSerializerMixin, CustomViewset):
         # TODO: attention: page d'erreur si l'utilisateur est anonyme
         return Contributor.objects.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        user = self.request.user
-        project = self.request.data.get("project")
-        print(project)
-        if check_user_in_contrib(project, user):
-            return serializer.save()
-        raise ValueError("Vous ne pouvez pas ajouter de contributeur à un projet auquel vous ne participez pas")
-
 
 class IssueViewset(MultipleSerializerMixin, CustomViewset):
 
@@ -175,8 +173,12 @@ class IssueViewset(MultipleSerializerMixin, CustomViewset):
     detail_serializer_class = IssueDetailSerializer
 
     def get_queryset(self):
-        contributor = Contributor.objects.filter(user=self.request.user)
-        return Issue.objects.filter(project__contributors__in=contributor)
+        # contributor = Contributor.objects.filter(user=self.request.user)
+        # return Issue.objects.filter(project__contributors__in=contributor)
+        return Issue.objects.filter(
+            Q(author_user_id=self.request.user) |
+            Q(assignee_user=self.request.user)
+        )
 
 
 class CommentViewset(MultipleSerializerMixin, CustomViewset):
@@ -185,5 +187,13 @@ class CommentViewset(MultipleSerializerMixin, CustomViewset):
     detail_serializer_class = CommentDetailSerializer
 
     def get_queryset(self):
-        contributor = Contributor.objects.filter(user=self.request.user)
-        return Comment.objects.filter(issue_id__project__contributors__in=contributor)
+        # contributor = Contributor.objects.filter(user=self.request.user)
+        # return Comment.objects.filter(issue_id__project__contributors__in=contributor)
+        issues = Issue.objects.filter(
+            Q(author_user_id=self.request.user) |
+            Q(assignee_user=self.request.user)
+        )
+        return Comment.objects.filter(
+            Q(author_user_id=self.request.user) |
+            Q(issue_id__in=issues)
+        )
