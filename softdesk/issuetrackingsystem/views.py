@@ -20,18 +20,57 @@ def check_owner(instance, user):
         if contributor.role == contributor.Role.CREATOR:
             return True
         return False
+    if type(instance) == Contributor:
+        if instance.role == Contributor.Role.CREATOR:
+            return True
+        return False
     else:
-        if instance.objects.filter(author_user_id=user):
+        if instance.author_user_id == user:
             return True
         return False
 
 
-def check_user_in_contrib(instance, user):
-    contributor = Contributor.objects.filter(project=instance, user=user)
+def check_user_in_contrib(project, user):
+    contributor = Contributor.objects.filter(project=project, user=user)
     if contributor:
         return True
     else:
         return False
+
+
+def get_project(self):
+    obj = self.get_object()
+    if type(obj) == Issue:
+        obj = obj.project
+    elif type(obj) == Comment:
+        obj = obj.issue_id.project
+    elif type(obj) == Contributor:
+        obj = obj.project
+    return obj
+
+
+class CustomViewset(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if check_user_in_contrib(project=get_project(self), user=self.request.user):
+            serializer.save()
+        else:
+            raise ValueError("Vous ne pouvez pas créer d'objet si vous n'êtes pas contributeur du projet")
+
+    def perform_update(self, serializer):
+        if check_user_in_contrib(project=get_project(self), user=self.request.user) \
+                and check_owner(instance=self.get_object(), user=self.request.user):
+            return serializer.save()
+        else:
+            raise ValueError("Vous ne pouvez pas modifier un élement dont vous n'êtes pas le créateur")
+
+    def perform_destroy(self, instance):
+        if check_user_in_contrib(project=get_project(self), user=self.request.user) \
+                and check_owner(instance=self.get_object(), user=self.request.user):
+            return self.perform_destroy(instance)
+        else:
+            raise ValueError("Vous ne pouvez pas supprimer un élément dont vous n'êtes pas le créateur")
 
 
 class MultipleSerializerMixin:
@@ -41,39 +80,6 @@ class MultipleSerializerMixin:
         if self.action == "retrieve" and self.detail_serializer_class is not None:
             return self.detail_serializer_class
         return super().get_serializer_class()
-
-
-class CustomViewset(ModelViewSet):
-
-    def perform_create(self, serializer):
-        instance = self.get_object()
-        if type(instance) != Project:
-            instance = instance.project
-        user = self.request.user
-        if check_user_in_contrib(instance, user):
-            serializer.save()
-        else:
-            raise ValueError("Vous ne pouvez pas créer d'objet si vous n'êtes pas contributeur du projet")
-
-    def perform_update(self, serializer):
-        instance = self.get_object()
-        if type(instance) != Project:
-            instance = instance.project
-        user = self.request.user
-        if check_user_in_contrib(instance, user) and check_owner(instance, user):
-            return serializer.save()
-        else:
-            raise ValueError("Vous ne pouvez pas modifier un élement dont vous n'êtes pas le créateur")
-
-    def perform_destroy(self, instance):
-        instance = self.get_object()
-        if type(instance) != Project:
-            instance = instance.project
-        user = self.request.user
-        if check_user_in_contrib(instance, user) and check_owner(instance, user):
-            return self.perform_destroy(instance)
-        else:
-            raise ValueError("Vous ne pouvez pas supprimer un élément dont vous n'êtes pas le créateur")
 
 
 def create_contributor(user, project):
@@ -128,12 +134,10 @@ class ContributorAdminViewset(ModelViewSet):
         return Contributor.objects.all()
 
 
-class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
+class ProjectViewset(MultipleSerializerMixin, CustomViewset):
 
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectDetailSerializer
-
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         contributor = Contributor.objects.filter(user=self.request.user)
@@ -146,7 +150,8 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
         create_contributor(user, project)
 
 
-class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
+# TODO: mettre en readonly pour les détails ?
+class ContributorViewset(MultipleSerializerMixin, CustomViewset):
 
     serializer_class = ContributorListSerializer
     detail_serializer_class = ContributorDetailSerializer
@@ -154,6 +159,14 @@ class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
     def get_queryset(self):
         # TODO: attention: page d'erreur si l'utilisateur est anonyme
         return Contributor.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        project = self.request.data.get("project")
+        print(project)
+        if check_user_in_contrib(project, user):
+            return serializer.save()
+        raise ValueError("Vous ne pouvez pas ajouter de contributeur à un projet auquel vous ne participez pas")
 
 
 class IssueViewset(MultipleSerializerMixin, CustomViewset):
@@ -166,7 +179,7 @@ class IssueViewset(MultipleSerializerMixin, CustomViewset):
         return Issue.objects.filter(project__contributors__in=contributor)
 
 
-class CommentViewset(MultipleSerializerMixin, ModelViewSet):
+class CommentViewset(MultipleSerializerMixin, CustomViewset):
 
     serializer_class = CommentListSerializer
     detail_serializer_class = CommentDetailSerializer
