@@ -1,5 +1,4 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 from authentication.models import User
 
@@ -8,7 +7,7 @@ class CommentListSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["description", "author_user_id", "issue_id"]
+        fields = ["id", "description", "author_user_id", "issue_id"]
         read_only_fields = ("author_user_id",)
 
 
@@ -16,12 +15,7 @@ class CommentDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = [
-            "description",
-            "author_user_id",
-            "issue_id",
-            "created_time",
-        ]
+        fields = "__all__"
         read_only_fields = ("author_user_id",)
 
     def create(self, validated_data):
@@ -33,7 +27,7 @@ class IssueListSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ["title", "project", "comments"]
+        fields = ["id", "title", "project", "comments"]
 
 
 class IssueDetailSerializer(ModelSerializer):
@@ -42,18 +36,7 @@ class IssueDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = [
-            "title",
-            "description",
-            "tag",
-            "priority",
-            "status",
-            "project",
-            "author_user_id",
-            "assignee_user",
-            "created_time",
-            "comments",
-        ]
+        fields = "__all__"
         read_only_fields = ("author_user_id",)
 
     def get_comments(self, instance):
@@ -70,7 +53,7 @@ class ProjectListSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ["title", "description"]
+        fields = ["id", "title", "description"]
 
 
 class ProjectDetailSerializer(ModelSerializer):
@@ -79,13 +62,7 @@ class ProjectDetailSerializer(ModelSerializer):
 
     class Meta:
         model = Project
-        fields = [
-            "title",
-            "description",
-            "type",
-            "author_user_id",
-            "issues",
-        ]
+        fields = "__all__"
         read_only_fields = ("author_user_id",)
 
     def get_issues(self, instance):
@@ -103,7 +80,7 @@ class ContributorListSerializer(ModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ["user", "project"]
+        fields = ["id", "user", "project"]
 
 
 class ContributorDetailSerializer(ModelSerializer):
