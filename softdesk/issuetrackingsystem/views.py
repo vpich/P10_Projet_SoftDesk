@@ -83,8 +83,15 @@ class MultipleSerializerMixin:
     detail_serializer_class = None
 
     def get_serializer_class(self):
-        if self.action == "retrieve" and self.detail_serializer_class is not None:
-            return self.detail_serializer_class
+        if self.detail_serializer_class is not None:
+            if self.action == "retrieve":
+                return self.detail_serializer_class
+            elif self.action == "create":
+                return self.detail_serializer_class
+            elif self.action == "update":
+                return self.detail_serializer_class
+            elif self.action == "partial_update":
+                return self.detail_serializer_class
         return super().get_serializer_class()
 
 
@@ -173,12 +180,11 @@ class IssueViewset(MultipleSerializerMixin, CustomViewset):
     detail_serializer_class = IssueDetailSerializer
 
     def get_queryset(self):
-        # contributor = Contributor.objects.filter(user=self.request.user)
-        # return Issue.objects.filter(project__contributors__in=contributor)
-        return Issue.objects.filter(
-            Q(author_user_id=self.request.user) |
-            Q(assignee_user=self.request.user)
-        )
+        contributors = Contributor.objects.filter(user=self.request.user)
+        return Issue.objects.filter(project__contributors__in=contributors)
+        # projects = [element.project for element in contributors]
+        # print(projects)
+        # return Issue.objects.filter(project__in=projects)
 
 
 class CommentViewset(MultipleSerializerMixin, CustomViewset):
@@ -187,13 +193,13 @@ class CommentViewset(MultipleSerializerMixin, CustomViewset):
     detail_serializer_class = CommentDetailSerializer
 
     def get_queryset(self):
-        # contributor = Contributor.objects.filter(user=self.request.user)
-        # return Comment.objects.filter(issue_id__project__contributors__in=contributor)
-        issues = Issue.objects.filter(
-            Q(author_user_id=self.request.user) |
-            Q(assignee_user=self.request.user)
-        )
-        return Comment.objects.filter(
-            Q(author_user_id=self.request.user) |
-            Q(issue_id__in=issues)
-        )
+        contributor = Contributor.objects.filter(user=self.request.user)
+        return Comment.objects.filter(issue_id__project__contributors__in=contributor)
+        # issues = Issue.objects.filter(
+        #     Q(author_user_id=self.request.user) |
+        #     Q(assignee_user=self.request.user)
+        # )
+        # return Comment.objects.filter(
+        #     Q(author_user_id=self.request.user) |
+        #     Q(issue_id__in=issues)
+        # )

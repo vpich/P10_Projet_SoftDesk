@@ -10,10 +10,6 @@ class CommentListSerializer(ModelSerializer):
         fields = ["id", "description", "author_user_id", "issue_id"]
         read_only_fields = ("author_user_id",)
 
-    def create(self, validated_data):
-        validated_data["author_user_id"] = User.objects.get(id=self.context["request"].user.id)
-        return Comment.objects.create(**validated_data)
-
 
 class CommentDetailSerializer(ModelSerializer):
 
@@ -22,16 +18,17 @@ class CommentDetailSerializer(ModelSerializer):
         fields = "__all__"
         read_only_fields = ("author_user_id",)
 
+    def create(self, validated_data):
+        validated_data["author_user_id"] = User.objects.get(id=self.context["request"].user.id)
+        return Comment.objects.create(**validated_data)
+
 
 class IssueListSerializer(ModelSerializer):
 
     class Meta:
         model = Issue
         fields = ["id", "title", "project", "comments"]
-
-    def create(self, validated_data):
-        validated_data["author_user_id"] = User.objects.get(id=self.context["request"].user.id)
-        return Issue.objects.create(**validated_data)
+        read_only_fields = ("comments",)
 
 
 class IssueDetailSerializer(ModelSerializer):
@@ -41,12 +38,16 @@ class IssueDetailSerializer(ModelSerializer):
     class Meta:
         model = Issue
         fields = "__all__"
-        read_only_fields = ("author_user_id",)
+        read_only_fields = ("author_user_id", )
 
     def get_comments(self, instance):
         queryset = instance.comments.all()
-        serializer = CommentListSerializer(queryset, many=True)
+        serializer = CommentDetailSerializer(queryset, many=True)
         return serializer.data
+
+    def create(self, validated_data):
+        validated_data["author_user_id"] = User.objects.get(email=self.context["request"].user)
+        return Issue.objects.create(**validated_data)
 
 
 class ProjectListSerializer(ModelSerializer):
@@ -59,6 +60,7 @@ class ProjectListSerializer(ModelSerializer):
 class ProjectDetailSerializer(ModelSerializer):
 
     issues = SerializerMethodField()
+    contributors = SerializerMethodField()
 
     class Meta:
         model = Project
@@ -67,7 +69,12 @@ class ProjectDetailSerializer(ModelSerializer):
 
     def get_issues(self, instance):
         queryset = instance.issues.all()
-        serializer = IssueListSerializer(queryset, many=True)
+        serializer = IssueDetailSerializer(queryset, many=True)
+        return serializer.data
+
+    def get_contributors(self, instance):
+        queryset = instance.contributors.all()
+        serializer = ContributorDetailSerializer(queryset, many=True)
         return serializer.data
 
 
