@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from issuetrackingsystem.models import Project, Contributor, Issue, Comment
+from issuetrackingsystem.models import Contributor, Issue, Comment
 
 
 class IsAdminAuthenticated(BasePermission):
@@ -23,25 +23,38 @@ def get_project(obj):
 
 
 class IsUserContributor(BasePermission):
-
     def has_object_permission(self, request, view, obj):
-        contributor = Contributor.objects.filter(project=get_project(obj), user=request.user)
+        try:
+            contributor = Contributor.objects.filter(project=get_project(obj), user=request.user)
+        except contributor.DoesNotExist:
+            return False
         if contributor:
             return True
-        else:
-            return False
+        return False
 
 
-class IsOwnerOrReadOnly(BasePermission):
+class HasContributorWritePermission(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        if type(obj) == Contributor:
+            return obj.role == Contributor.Role.CREATOR
 
+
+class IsAuthor(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        return obj.author_user_id == request.user
+
+
+class HasProjectWritePermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
 
-        if type(obj) == Project:
+        try:
             contributor = Contributor.objects.get(project=obj, user=request.user)
-            return contributor.role == contributor.Role.CREATOR
-        elif type(obj) == Contributor:
-            return obj.role == Contributor.Role.CREATOR
-        else:
-            return obj.author_user_id == request.user
+        except Contributor.DoesNotExist:
+            return False
+        return contributor.permission == Contributor.Permission.CRUD
