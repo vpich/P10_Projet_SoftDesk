@@ -7,21 +7,27 @@ from issuetrackingsystem.models import Project, Issue, Comment, Contributor
 from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetailSerializer, \
     CommentDetailSerializer, ContributorDetailSerializer, \
     ProjectListSerializer, CommentListSerializer, IssueListSerializer, ContributorListSerializer
-from issuetrackingsystem.permissions import IsAdminAuthenticated, IsOwnerOrReadOnly, IsUserContributor
+from issuetrackingsystem.permissions import IsAdminAuthenticated, IsUserContributor, \
+    IsAuthor, HasContributorWritePermission, HasProjectWritePermission
 
 
 def create_contributor(user, project):
-    contributor = Contributor.objects.create(user=user, project=project)
+    contributor = Contributor.objects.create(
+        user_foreign_key=user,
+        project_foreign_key=project,
+        user_id=user.user_id,
+        project_id=project.project_id
+    )
     contributor.role = contributor.Role.CREATOR
+    contributor.permission = Contributor.Permission.CRUD
     return contributor.save()
 
 
-class CustomViewset(ModelViewSet):
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly, IsUserContributor]
+class CreateModelMixin:
 
     def create(self, request, *args, **kwargs):
-        project = Project.objects.get(id=self.request.data.get("project"))
-        if Contributor.objects.filter(project=project, user=self.request.user):
+        project = Project.objects.get(project_id=self.request.data.get("project_id"))
+        if Contributor.objects.filter(project_foreign_key=project, user_foreign_key=self.request.user):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
@@ -57,7 +63,7 @@ class ProjectAdminViewset(ModelViewSet):
 
     def perform_create(self, serializer):
         project_save = serializer.save()
-        project = Project.objects.get(id=project_save.id)
+        project = Project.objects.get(project_id=project_save.pk)
         user = self.request.user
         create_contributor(user, project)
 
@@ -94,52 +100,56 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ProjectListSerializer
     detail_serializer_class = ProjectDetailSerializer
 
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly, IsUserContributor]
+    permission_classes = [IsAuthenticated, IsUserContributor, HasProjectWritePermission]
 
     def get_queryset(self):
-        contributor = Contributor.objects.filter(user=self.request.user)
+        contributor = Contributor.objects.filter(user_id=self.request.user.user_id)
         return Project.objects.filter(contributors__in=contributor)
 
     def perform_create(self, serializer):
         project_save = serializer.save()
-        project = Project.objects.get(id=project_save.id)
+        project = Project.objects.get(project_id=project_save.project_id)
         user = self.request.user
         create_contributor(user, project)
 
 
-# TODO: mettre en readonly pour les détails ?
-class ContributorViewset(MultipleSerializerMixin, CustomViewset):
+class ContributorViewset(MultipleSerializerMixin, CreateModelMixin, ModelViewSet):
 
     serializer_class = ContributorListSerializer
     detail_serializer_class = ContributorDetailSerializer
 
+    permission_classes = [IsAuthenticated, IsUserContributor, HasContributorWritePermission]
+
     def get_queryset(self):
-        # TODO: attention: page d'erreur si l'utilisateur est anonyme
-        return Contributor.objects.filter(user=self.request.user)
+        return Contributor.objects.filter(user_id=self.request.user.user_id)
 
 
-class IssueViewset(MultipleSerializerMixin, CustomViewset):
+class IssueViewset(MultipleSerializerMixin, CreateModelMixin, ModelViewSet):
 
     serializer_class = IssueListSerializer
     detail_serializer_class = IssueDetailSerializer
 
+    permission_classes = [IsAuthenticated, IsUserContributor, IsAuthor]
+
     def get_queryset(self):
-        contributors = Contributor.objects.filter(user=self.request.user)
-        return Issue.objects.filter(project__contributors__in=contributors)
+        contributors = Contributor.objects.filter(user_id=self.request.user.user_id)
+        return Issue.objects.filter(project_foreign_key__contributors__in=contributors)
 
 
-class CommentViewset(MultipleSerializerMixin, CustomViewset):
+class CommentViewset(MultipleSerializerMixin, ModelViewSet):
 
     serializer_class = CommentListSerializer
     detail_serializer_class = CommentDetailSerializer
 
+    permission_classes = [IsAuthenticated, IsUserContributor, IsAuthor]
+
     def get_queryset(self):
-        contributor = Contributor.objects.filter(user=self.request.user)
-        return Comment.objects.filter(issue_id__project__contributors__in=contributor)
+        contributor = Contributor.objects.filter(user_id=self.request.user.user_id)
+        return Comment.objects.filter(issue_id__project_foreign_key__contributors__in=contributor)
 
     def create(self, request, *args, **kwargs):
-        project = Issue.objects.get(id=self.request.data.get("issue_id")).project
-        if Contributor.objects.filter(project=project, user=self.request.user):
+        project = Issue.objects.get(id=self.request.data.get("issue_id")).project_foreign_key
+        if Contributor.objects.filter(project_foreign_key=project, user_foreign_key=self.request.user):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)

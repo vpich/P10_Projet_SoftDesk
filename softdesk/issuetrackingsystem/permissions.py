@@ -14,23 +14,21 @@ class IsAdminAuthenticated(BasePermission):
 
 def get_project(obj):
     if type(obj) == Issue:
-        obj = obj.project
+        obj = obj.project_foreign_key
     elif type(obj) == Comment:
-        obj = obj.issue_id.project
+        obj = obj.issue_id.project_foreign_key
     elif type(obj) == Contributor:
-        obj = obj.project
+        obj = obj.project_foreign_key
     return obj
 
 
 class IsUserContributor(BasePermission):
     def has_object_permission(self, request, view, obj):
         try:
-            contributor = Contributor.objects.filter(project=get_project(obj), user=request.user)
-        except contributor.DoesNotExist:
+            Contributor.objects.get(project_foreign_key=get_project(obj), user_foreign_key=request.user)
+        except Contributor.DoesNotExist:
             return False
-        if contributor:
-            return True
-        return False
+        return True
 
 
 class HasContributorWritePermission(BasePermission):
@@ -54,7 +52,7 @@ class HasProjectWritePermission(BasePermission):
             return True
 
         try:
-            contributor = Contributor.objects.get(project=obj, user=request.user)
+            contributor = Contributor.objects.get(project_foreign_key=obj, user_foreign_key=request.user)
         except Contributor.DoesNotExist:
             return False
         return contributor.permission == Contributor.Permission.CRUD

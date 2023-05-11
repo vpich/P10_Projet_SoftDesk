@@ -15,6 +15,8 @@ class CustomUserManager(BaseUserManager):
         user = self.model(email=email, first_name=first_name, last_name=last_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+        user.user_id = user.id
+        user.save()
         return user
 
     def create_superuser(self, email, password, first_name, last_name):
@@ -26,6 +28,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    user_id = models.IntegerField(null=True)
     email = models.EmailField(unique=True)
     username = None
 
