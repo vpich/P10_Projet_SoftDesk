@@ -22,7 +22,22 @@ def get_project(obj):
     return obj
 
 
+def get_kwargs(view):
+    try:
+        return Issue.objects.get(id=view.kwargs["issue_pk"]).project_id
+    except KeyError:
+        return view.kwargs["project_pk"]
+
+
 class IsUserContributor(BasePermission):
+
+    def has_permission(self, request, view):
+        try:
+            Contributor.objects.get(project_id=get_kwargs(view), user_foreign_key=request.user)
+        except Contributor.DoesNotExist:
+            return False
+        return True
+
     def has_object_permission(self, request, view, obj):
         try:
             Contributor.objects.get(project_foreign_key=get_project(obj), user_foreign_key=request.user)

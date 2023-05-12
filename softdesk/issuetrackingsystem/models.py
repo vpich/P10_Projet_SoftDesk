@@ -3,8 +3,6 @@ from django.conf import settings
 
 from authentication.models import User
 
-USERS_CHOICES = [(user.user_id, user.user_id) for user in User.objects.all()]
-
 
 class Project(models.Model):
 
@@ -28,9 +26,6 @@ class Project(models.Model):
     # )
 
 
-PROJECTS_CHOICES = [(project.project_id, project.project_id) for project in Project.objects.all()]
-
-
 class Issue(models.Model):
 
     class Tag(models.TextChoices):
@@ -52,12 +47,11 @@ class Issue(models.Model):
     description = models.CharField(max_length=2048, blank=True, null=True)
     tag = models.CharField(max_length=128, choices=Tag.choices)
     priority = models.CharField(max_length=128, choices=Priority.choices)
-    project_id = models.IntegerField(choices=PROJECTS_CHOICES)
+    project_id = models.IntegerField()
     project_foreign_key = models.ForeignKey(
         to=Project,
         on_delete=models.CASCADE,
         related_name="issues",
-        null=True,
     )
     status = models.CharField(max_length=128, choices=Status.choices)
     author_user_id = models.ForeignKey(
@@ -103,24 +97,23 @@ class Contributor(models.Model):
         CRUD = "CREATE_READ_UPDATE_DELETE"
         CR = "CREATE_READ"
 
-    user_id = models.IntegerField(choices=USERS_CHOICES)
+    user_id = models.IntegerField()
     user_foreign_key = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="contributors",
-        null=True,
+        verbose_name="Utilisateurs",
     )
 
     permission = models.CharField(max_length=50, choices=Permission.choices,
                                   verbose_name="Permission", default=Permission.CR)
     role = models.CharField(max_length=128, choices=Role.choices, verbose_name="Rôle", default=Role.CONTRIBUTOR)
 
-    project_id = models.IntegerField(choices=PROJECTS_CHOICES)
+    project_id = models.IntegerField()
     project_foreign_key = models.ForeignKey(
         to=Project,
         on_delete=models.CASCADE,
         related_name="contributors",
-        null=True,
     )
 
     class Meta:
