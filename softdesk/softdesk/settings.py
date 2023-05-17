@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "rest_framework",
+    "rest_framework_simplejwt",
     "authentication",
     "issuetrackingsystem",
 ]
@@ -130,8 +131,11 @@ AUTH_USER_MODEL = "authentication.User"
 LOGIN_REDIRECT_URL = "/api/projects/"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    )
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Décommenter la ligne ci-dessous si besoin de s'authentifier sur le template rest_framework
+        # 'rest_framework.authentication.SessionAuthentication',
+    ),
 }
