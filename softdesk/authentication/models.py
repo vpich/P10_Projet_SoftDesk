@@ -1,17 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-# TODO: utiliser l'authentification JWT
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, first_name=None, last_name=None, **extra_fields):
         if not email:
-            raise ValueError("Enter an email address")
-        if not first_name:
-            raise ValueError("Enter a first name")
-        if not last_name:
-            raise ValueError("Enter a last name")
+            raise ValueError("Vous devez saisir une adresse email.")
         email = self.normalize_email(email)
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            raise ValueError(e)
         user = self.model(email=email, first_name=first_name, last_name=last_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
