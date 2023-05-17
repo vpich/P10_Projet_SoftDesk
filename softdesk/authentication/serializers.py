@@ -1,12 +1,7 @@
 from rest_framework.serializers import ModelSerializer, ValidationError
-# from rest_framework_simplejwt.serializer
 from rest_framework import serializers
 
 from authentication.models import User
-
-
-class MyTokenObtainPairSerializer():
-    pass
 
 
 class UserSerializer(ModelSerializer):
@@ -44,11 +39,14 @@ class CreateUserSerializer(ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data["email"],
-            first_name=validated_data["first_name"],
-            last_name=validated_data["last_name"],
-            password=validated_data["password"],
-        )
+        try:
+            user = User.objects.create_user(
+                email=validated_data["email"],
+                first_name=validated_data["first_name"],
+                last_name=validated_data["last_name"],
+                password=validated_data["password"],
+            )
+        except ValueError as e:
+            raise ValidationError({"champs incorrect": e})
 
         return user
