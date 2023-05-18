@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -7,7 +8,7 @@ from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetail
     CommentDetailSerializer, ContributorDetailSerializer, \
     ProjectListSerializer, CommentListSerializer, IssueListSerializer, ContributorListSerializer
 from issuetrackingsystem.permissions import IsAdminAuthenticated, IsUserContributor, \
-    IsAuthor, HasContributorWritePermission, HasProjectWritePermission
+    IsAuthor, ContributorIsNotCreator, HasProjectWritePermission
 
 
 def create_contributor(user, project):
@@ -104,24 +105,31 @@ class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ContributorListSerializer
     detail_serializer_class = ContributorDetailSerializer
 
-    permission_classes = [IsAuthenticated, IsUserContributor, HasContributorWritePermission]
+    permission_classes = [IsAuthenticated, IsUserContributor, ContributorIsNotCreator]
 
     def get_queryset(self):
         return Contributor.objects.filter(project_id=self.kwargs["project_pk"])
 
     def perform_create(self, serializer):
+        # TODO: faire un try-except
         project = Project.objects.get(project_id=self.kwargs["project_pk"])
-        serializer.save(
-            user_id=serializer.validated_data["user_foreign_key"].user_id,
-            project_id=self.kwargs["project_pk"],
-            project_foreign_key=project,
-        )
+        try:
+            serializer.save(
+                user_id=serializer.validated_data["user_foreign_key"].user_id,
+                project_id=self.kwargs["project_pk"],
+                project_foreign_key=project,
+            )
+        except IntegrityError as e:
+            raise ValidationError({"detail": e})
         return serializer
 
     def perform_update(self, serializer):
-        serializer.save(
-            user_id=serializer.validated_data["user_foreign_key"].user_id,
-        )
+        try:
+            serializer.save(
+                user_id=serializer.validated_data["user_foreign_key"].user_id,
+            )
+        except IntegrityError as e:
+            raise ValidationError({"detail": e})
         return serializer
 
 
@@ -140,7 +148,7 @@ class IssueViewset(MultipleSerializerMixin, ModelViewSet):
             project = Project.objects.get(project_id=self.kwargs["project_pk"])
             Contributor.objects.get(user_foreign_key=serializer.validated_data["assignee_user_id"], project_foreign_key=project)
         except Exception as e:
-            raise ValidationError(e)
+            raise ValidationError({"detail": e})
         serializer.save(
             author_user_id=self.request.user,
             project_id=self.kwargs["project_pk"],
@@ -153,7 +161,11 @@ class IssueViewset(MultipleSerializerMixin, ModelViewSet):
             project = Project.objects.get(project_id=self.kwargs["project_pk"])
             Contributor.objects.get(user_foreign_key=serializer.validated_data["assignee_user_id"], project_foreign_key=project)
         except Exception as e:
-            raise ValidationError(e)
+            raise ValidationError({"detail": e})
+        serializer.save(
+            project_id=self.kwargs["project_pk"],
+            project_foreign_key=project,
+        )
         return serializer
 
 
@@ -165,10 +177,17 @@ class CommentViewset(MultipleSerializerMixin, ModelViewSet):
     permission_classes = [IsAuthenticated, IsUserContributor, IsAuthor]
 
     def get_queryset(self):
+        try:
+            Issue.objects.get(id=self.kwargs["issue_pk"])
+        except Issue.DoesNotExist as e:
+            raise ValidationError({"detail": e})
         return Comment.objects.filter(issue_id=self.kwargs["issue_pk"])
 
     def perform_create(self, serializer):
-        issue = Issue.objects.get(id=self.kwargs["issue_pk"])
+        try:
+            issue = Issue.objects.get(id=self.kwargs["issue_pk"])
+        except Issue.DoesNotExist as e:
+            raise ValidationError({"detail": e})
         serializer.save(
             author_user_id=self.request.user,
             issue_id=issue,

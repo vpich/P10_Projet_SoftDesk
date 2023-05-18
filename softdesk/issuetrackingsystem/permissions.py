@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from issuetrackingsystem.models import Contributor, Issue, Comment
+from issuetrackingsystem.models import Contributor, Issue, Comment, Project
+from rest_framework.exceptions import NotFound
 
 
 class IsAdminAuthenticated(BasePermission):
@@ -24,9 +25,10 @@ def get_project(obj):
 
 def get_kwargs(view):
     try:
-        return Issue.objects.get(id=view.kwargs["issue_pk"]).project_id
-    except KeyError:
+        Project.objects.get(project_id=view.kwargs["project_pk"])
         return view.kwargs["project_pk"]
+    except Project.DoesNotExist:
+        raise NotFound
 
 
 class IsUserContributor(BasePermission):
@@ -46,12 +48,11 @@ class IsUserContributor(BasePermission):
         return True
 
 
-class HasContributorWritePermission(BasePermission):
+class ContributorIsNotCreator(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
-        if type(obj) == Contributor:
-            return obj.role == Contributor.Role.CREATOR
+        return obj.role != Contributor.Role.CREATOR
 
 
 class IsAuthor(BasePermission):
