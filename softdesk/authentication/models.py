@@ -5,7 +5,12 @@ from django.core.exceptions import ValidationError
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, password=None, first_name=None, last_name=None, **extra_fields):
+    def create_user(self,
+                    email,
+                    password=None,
+                    first_name=None,
+                    last_name=None,
+                    **extra_fields):
         if not email:
             raise ValueError("Vous devez saisir une adresse email.")
         email = self.normalize_email(email)
@@ -13,7 +18,12 @@ class CustomUserManager(BaseUserManager):
             validate_password(password)
         except ValidationError as e:
             raise ValueError(e)
-        user = self.model(email=email, first_name=first_name, last_name=last_name, **extra_fields)
+        user = self.model(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            **extra_fields
+        )
         user.set_password(password)
         user.save(using=self._db)
         user.user_id = user.id
@@ -21,7 +31,12 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password, first_name, last_name):
-        user = self.create_user(email, password=password, first_name=first_name, last_name=last_name)
+        user = self.create_user(
+            email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
         user.is_superuser = True
         user.is_staff = True
         user.save(using=self._db)

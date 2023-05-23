@@ -105,9 +105,18 @@ class Contributor(models.Model):
         verbose_name="Utilisateurs",
     )
 
-    permission = models.CharField(max_length=50, choices=Permission.choices,
-                                  verbose_name="Permission", default=Permission.CR)
-    role = models.CharField(max_length=128, choices=Role.choices, verbose_name="Rôle", default=Role.CONTRIBUTOR)
+    permission = models.CharField(
+        max_length=50,
+        choices=Permission.choices,
+        verbose_name="Permission",
+        default=Permission.CR
+    )
+    role = models.CharField(
+        max_length=128,
+        choices=Role.choices,
+        verbose_name="Rôle",
+        default=Role.CONTRIBUTOR
+    )
 
     project_id = models.IntegerField()
     project_foreign_key = models.ForeignKey(

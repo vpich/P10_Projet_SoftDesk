@@ -35,14 +35,20 @@ class IsUserContributor(BasePermission):
 
     def has_permission(self, request, view):
         try:
-            Contributor.objects.get(project_id=get_kwargs(view), user_foreign_key=request.user)
+            Contributor.objects.get(
+                project_id=get_kwargs(view),
+                user_foreign_key=request.user
+            )
         except Contributor.DoesNotExist:
             return False
         return True
 
     def has_object_permission(self, request, view, obj):
         try:
-            Contributor.objects.get(project_foreign_key=get_project(obj), user_foreign_key=request.user)
+            Contributor.objects.get(
+                project_foreign_key=get_project(obj),
+                user_foreign_key=request.user
+            )
         except Contributor.DoesNotExist:
             return False
         return True
@@ -68,7 +74,10 @@ class HasProjectWritePermission(BasePermission):
             return True
 
         try:
-            contributor = Contributor.objects.get(project_foreign_key=obj, user_foreign_key=request.user)
+            contributor = Contributor.objects.get(
+                project_foreign_key=obj,
+                user_foreign_key=request.user
+            )
         except Contributor.DoesNotExist:
             return False
         return contributor.permission == Contributor.Permission.CRUD

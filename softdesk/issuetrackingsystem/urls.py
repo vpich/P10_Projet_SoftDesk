@@ -1,8 +1,16 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from issuetrackingsystem.views import ProjectViewset, ContributorViewset, IssueViewset, CommentViewset, \
-    ProjectAdminViewset, IssueAdminViewset, CommentAdminViewset, ContributorAdminViewset
+from issuetrackingsystem.views import (
+    ProjectViewset,
+    ContributorViewset,
+    IssueViewset,
+    CommentViewset,
+    ProjectAdminViewset,
+    IssueAdminViewset,
+    CommentAdminViewset,
+    ContributorAdminViewset
+)
 
 router = routers.SimpleRouter()
 router.register("projects", ProjectViewset, basename="projects")
@@ -22,10 +30,18 @@ issues_router = routers.NestedSimpleRouter(
 issues_router.register(r"comments", CommentViewset, basename="comments")
 
 router_admin = routers.SimpleRouter()
-router_admin.register("projects", ProjectAdminViewset, basename="admin-projects")
-router_admin.register("issues", IssueAdminViewset, basename="admin-issues")
-router_admin.register("comments", CommentAdminViewset, basename="admin-comments")
-router_admin.register("contributors", ContributorAdminViewset, basename="admin-contributors")
+router_admin.register("projects",
+                      ProjectAdminViewset,
+                      basename="admin-projects")
+router_admin.register("issues",
+                      IssueAdminViewset,
+                      basename="admin-issues")
+router_admin.register("comments",
+                      CommentAdminViewset,
+                      basename="admin-comments")
+router_admin.register("contributors",
+                      ContributorAdminViewset,
+                      basename="admin-contributors")
 
 urlpatterns = [
     path("admin/", include(router_admin.urls)),

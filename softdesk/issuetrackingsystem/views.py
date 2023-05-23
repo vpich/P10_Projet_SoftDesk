@@ -4,11 +4,23 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 
 from issuetrackingsystem.models import Project, Issue, Comment, Contributor
-from issuetrackingsystem.serializers import ProjectDetailSerializer, IssueDetailSerializer, \
-    CommentDetailSerializer, ContributorDetailSerializer, \
-    ProjectListSerializer, CommentListSerializer, IssueListSerializer, ContributorListSerializer
-from issuetrackingsystem.permissions import IsAdminAuthenticated, IsUserContributor, \
-    IsAuthor, ContributorIsNotCreator, HasProjectWritePermission
+from issuetrackingsystem.serializers import (
+    ProjectDetailSerializer,
+    IssueDetailSerializer,
+    CommentDetailSerializer,
+    ContributorDetailSerializer,
+    ProjectListSerializer,
+    CommentListSerializer,
+    IssueListSerializer,
+    ContributorListSerializer
+    )
+from issuetrackingsystem.permissions import (
+    IsAdminAuthenticated,
+    IsUserContributor,
+    IsAuthor,
+    ContributorIsNotCreator,
+    HasProjectWritePermission
+)
 
 
 def create_contributor(user, project):
@@ -90,7 +102,9 @@ class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
     permission_classes = [IsAuthenticated, HasProjectWritePermission]
 
     def get_queryset(self):
-        return Project.objects.filter(contributors__user_id=self.request.user.user_id)
+        return Project.objects.filter(
+            contributors__user_id=self.request.user.user_id
+        )
 
     def perform_create(self, serializer):
         project_save = serializer.save()
@@ -105,7 +119,9 @@ class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
     serializer_class = ContributorListSerializer
     detail_serializer_class = ContributorDetailSerializer
 
-    permission_classes = [IsAuthenticated, IsUserContributor, ContributorIsNotCreator]
+    permission_classes = [
+        IsAuthenticated, IsUserContributor, ContributorIsNotCreator
+    ]
 
     def get_queryset(self):
         return Contributor.objects.filter(project_id=self.kwargs["project_pk"])
@@ -146,7 +162,10 @@ class IssueViewset(MultipleSerializerMixin, ModelViewSet):
     def perform_create(self, serializer):
         try:
             project = Project.objects.get(project_id=self.kwargs["project_pk"])
-            Contributor.objects.get(user_foreign_key=serializer.validated_data["assignee_user_id"], project_foreign_key=project)
+            Contributor.objects.get(
+                user_foreign_key=serializer.validated_data["assignee_user_id"],
+                project_foreign_key=project
+            )
         except Exception as e:
             raise ValidationError({"detail": e})
         serializer.save(
@@ -159,7 +178,10 @@ class IssueViewset(MultipleSerializerMixin, ModelViewSet):
     def perform_update(self, serializer):
         try:
             project = Project.objects.get(project_id=self.kwargs["project_pk"])
-            Contributor.objects.get(user_foreign_key=serializer.validated_data["assignee_user_id"], project_foreign_key=project)
+            Contributor.objects.get(
+                user_foreign_key=serializer.validated_data["assignee_user_id"],
+                project_foreign_key=project
+            )
         except Exception as e:
             raise ValidationError({"detail": e})
         serializer.save(

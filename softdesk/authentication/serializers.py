@@ -13,7 +13,12 @@ class UserSerializer(ModelSerializer):
 
 class CreateUserSerializer(ModelSerializer):
 
-    password2 = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'}, label="Confirmez votre mot de passe")
+    password2 = serializers.CharField(
+        write_only=True,
+        required=True,
+        style={'input_type': 'password'},
+        label="Confirmez votre mot de passe"
+    )
 
     class Meta:
         model = User
@@ -31,11 +36,26 @@ class CreateUserSerializer(ModelSerializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password2"]:
-            raise ValidationError({"password": "Les champs de mot de passe ne sont pas identiques."})
+            raise ValidationError(
+                {
+                    "password": "Les champs de mot de passe "
+                                "ne sont pas identiques."
+                }
+            )
         elif not attrs["first_name"]:
-            raise ValidationError({"first_name": "Vous devez saisir un prénom."})
+            raise ValidationError(
+                {
+                    "first_name": "Vous devez "
+                                  "saisir un prénom."
+                }
+            )
         elif not attrs["last_name"]:
-            raise ValidationError({"last_name": "Vous devez saisir un nom de famille."})
+            raise ValidationError(
+                {
+                    "last_name": "Vous devez "
+                                 "saisir un nom de famille."
+                }
+            )
         return attrs
 
     def create(self, validated_data):

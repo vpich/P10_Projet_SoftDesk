@@ -33,7 +33,11 @@ class IssueDetailSerializer(ModelSerializer):
     class Meta:
         model = Issue
         fields = "__all__"
-        read_only_fields = ("author_user_id", "project_foreign_key", "project_id")
+        read_only_fields = (
+            "author_user_id",
+            "project_foreign_key",
+            "project_id"
+        )
 
     def get_comments(self, instance):
         try:
@@ -90,4 +94,10 @@ class ContributorDetailSerializer(ModelSerializer):
     class Meta:
         model = Contributor
         fields = "__all__"
-        read_only_fields = ("user_id", "project_foreign_key", "role", "permission", "project_id")
+        read_only_fields = (
+            "user_id",
+            "project_foreign_key",
+            "role",
+            "permission",
+            "project_id"
+        )
