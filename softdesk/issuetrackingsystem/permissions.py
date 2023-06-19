@@ -3,16 +3,6 @@ from issuetrackingsystem.models import Contributor, Issue, Comment, Project
 from rest_framework.exceptions import NotFound
 
 
-class IsAdminAuthenticated(BasePermission):
-
-    def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.is_superuser
-        )
-
-
 def get_project(obj):
     if type(obj) == Issue:
         obj = obj.project_foreign_key

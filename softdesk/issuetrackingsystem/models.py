@@ -16,14 +16,6 @@ class Project(models.Model):
     title = models.CharField(max_length=128, verbose_name="Titre")
     description = models.CharField(max_length=2048)
     type = models.CharField(max_length=128, choices=Type.choices)
-    # attribut non implémenté pour éviter la redondance
-    # author_user_id = models.ForeignKey(
-    #     to=settings.AUTH_USER_MODEL,
-    #     on_delete=models.SET_NULL,
-    #     related_name="projects",
-    #     verbose_name="Créateur",
-    #     null=True,
-    # )
 
 
 class Issue(models.Model):

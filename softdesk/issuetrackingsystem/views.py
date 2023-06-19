@@ -15,7 +15,6 @@ from issuetrackingsystem.serializers import (
     ContributorListSerializer
     )
 from issuetrackingsystem.permissions import (
-    IsAdminAuthenticated,
     IsUserContributor,
     IsAuthor,
     ContributorIsNotCreator,
@@ -51,49 +50,6 @@ class MultipleSerializerMixin:
         return super().get_serializer_class()
 
 
-class ProjectAdminViewset(ModelViewSet):
-
-    serializer_class = ProjectDetailSerializer
-    permission_classes = [IsAdminAuthenticated]
-
-    def get_queryset(self):
-        return Project.objects.all()
-
-    def perform_create(self, serializer):
-        project_save = serializer.save()
-        project = Project.objects.get(project_id=project_save.pk)
-        user = self.request.user
-        create_contributor(user, project)
-        return serializer
-
-
-class IssueAdminViewset(ModelViewSet):
-
-    serializer_class = IssueDetailSerializer
-    permission_classes = [IsAdminAuthenticated]
-
-    def get_queryset(self):
-        return Issue.objects.all()
-
-
-class CommentAdminViewset(ModelViewSet):
-
-    serializer_class = CommentDetailSerializer
-    permission_classes = [IsAdminAuthenticated]
-
-    def get_queryset(self):
-        return Comment.objects.all()
-
-
-class ContributorAdminViewset(ModelViewSet):
-
-    serializer_class = ContributorDetailSerializer
-    permission_classes = [IsAdminAuthenticated]
-
-    def get_queryset(self):
-        return Contributor.objects.all()
-
-
 class ProjectViewset(MultipleSerializerMixin, ModelViewSet):
 
     serializer_class = ProjectListSerializer
@@ -127,7 +83,6 @@ class ContributorViewset(MultipleSerializerMixin, ModelViewSet):
         return Contributor.objects.filter(project_id=self.kwargs["project_pk"])
 
     def perform_create(self, serializer):
-        # TODO: faire un try-except
         project = Project.objects.get(project_id=self.kwargs["project_pk"])
         try:
             serializer.save(

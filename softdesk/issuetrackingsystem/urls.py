@@ -6,10 +6,6 @@ from issuetrackingsystem.views import (
     ContributorViewset,
     IssueViewset,
     CommentViewset,
-    ProjectAdminViewset,
-    IssueAdminViewset,
-    CommentAdminViewset,
-    ContributorAdminViewset
 )
 
 router = routers.SimpleRouter()
@@ -29,22 +25,7 @@ issues_router = routers.NestedSimpleRouter(
 )
 issues_router.register(r"comments", CommentViewset, basename="comments")
 
-router_admin = routers.SimpleRouter()
-router_admin.register("projects",
-                      ProjectAdminViewset,
-                      basename="admin-projects")
-router_admin.register("issues",
-                      IssueAdminViewset,
-                      basename="admin-issues")
-router_admin.register("comments",
-                      CommentAdminViewset,
-                      basename="admin-comments")
-router_admin.register("contributors",
-                      ContributorAdminViewset,
-                      basename="admin-contributors")
-
 urlpatterns = [
-    path("admin/", include(router_admin.urls)),
     path("", include(router.urls)),
     path("", include(projects_router.urls)),
     path("", include(issues_router.urls)),
