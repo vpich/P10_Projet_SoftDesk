@@ -24,7 +24,9 @@ class CreateUserSerializer(ModelSerializer):
         ]
         extra_kwargs = {
             "password": {"style": {'input_type': 'password'},
-                         "write_only": True}
+                         "write_only": True},
+            'first_name': {'required': True},
+            'last_name': {'required': True},
         }
 
     def validate(self, attrs):
